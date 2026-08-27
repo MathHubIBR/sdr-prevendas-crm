@@ -1,0 +1,9 @@
+# Backups exportados do app (arquivos .db do SQLite) — não devem ir para o repositório
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
