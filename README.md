@@ -31,6 +31,34 @@ Sem dependências externas em tempo de execução: a biblioteca sql.js é vendor
 - **Dashboard** — toques por dia/canal, distribuição de oportunidades por estágio, taxa de conversão, follow-ups atrasados.
 - **Backup manual** — exporta/importa um arquivo `.db` (SQLite) para segurança e portabilidade entre dispositivos.
 
+## Capturas de tela
+
+*Dados fictícios, apenas para demonstração.*
+
+**Follow-up de Hoje** — o que está atrasado ou vence hoje, direto ao ponto:
+
+![Follow-up de Hoje](docs/screenshots/followup.png)
+
+**Contas** — lista com busca e filtro por status:
+
+![Lista de contas](docs/screenshots/contas-lista.png)
+
+**Detalhe da conta** — contatos, oportunidades e histórico de interações num só lugar:
+
+![Detalhe de uma conta](docs/screenshots/conta-detalhe.png)
+
+**Registro rápido de interação** — poucos campos, próxima ação opcional:
+
+![Registrar interação](docs/screenshots/registrar-interacao.png)
+
+**Funil** — kanban por estágio, arrastar e soltar:
+
+![Funil de vendas](docs/screenshots/funil.png)
+
+**Dashboard** — KPIs de atividade e conversão:
+
+![Dashboard](docs/screenshots/dashboard.png)
+
 ## Como rodar
 
 Não precisa instalar nada. Dê duplo clique em [`index.html`](index.html) — abre no navegador padrão e já funciona offline.
