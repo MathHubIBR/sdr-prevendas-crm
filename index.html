@@ -11,6 +11,8 @@
     <h1>CRM de Pré-Vendas</h1>
     <div style="display:flex; align-items:center; gap:14px;">
       <span class="status" id="db-status">Carregando banco de dados...</span>
+      <span class="status" id="file-link-status"></span>
+      <button class="small" id="btn-vincular-arquivo" style="background:#fff">🔗 Vincular arquivo</button>
       <button class="small" id="btn-nova-interacao" style="background:#fff">+ Interação</button>
       <button class="small" id="btn-exportar" style="background:#fff">Exportar backup</button>
       <label class="small" style="background:#fff; border-radius:6px; padding:4px 10px; cursor:pointer; color:#1f2430; font-weight:normal;">
@@ -30,6 +32,7 @@
   <script src="js/lib/sql-wasm.js"></script>
   <script src="js/util.js"></script>
   <script src="js/modal.js"></script>
+  <script src="js/filestore.js"></script>
   <script src="js/db.js"></script>
   <script src="js/views/followup.js"></script>
   <script src="js/views/accounts.js"></script>

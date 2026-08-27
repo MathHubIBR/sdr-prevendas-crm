@@ -7,6 +7,8 @@ const IDB_KEY = 'main';
 
 let sqlJsModule = null;
 let db = null;
+let fileHandle = null;
+let fileMode = false; // true quando os dados estão vinculados a um arquivo real no disco
 
 function base64ToUint8Array(base64) {
   const binary = atob(base64);
@@ -105,12 +107,36 @@ async function initDb() {
     const wasmBinary = base64ToUint8Array(SQL_WASM_BASE64);
     sqlJsModule = await initSqlJs({ wasmBinary });
   }
-  const saved = await idbGet(IDB_KEY);
-  if (saved) {
-    db = new sqlJsModule.Database(new Uint8Array(saved));
-  } else {
-    db = new sqlJsModule.Database();
+
+  // Tenta usar um arquivo real vinculado anteriormente (mais seguro: não é
+  // compartilhado com outras páginas file://, ao contrário do IndexedDB).
+  let loadedFromFile = false;
+  if (fileSystemAccessSupported()) {
+    try {
+      const remembered = await loadHandleRef();
+      if (remembered && (await ensurePermission(remembered))) {
+        const bytes = await readFileBytes(remembered);
+        fileHandle = remembered;
+        fileMode = true;
+        if (bytes.length > 0) {
+          db = new sqlJsModule.Database(bytes);
+          loadedFromFile = true;
+        }
+      }
+    } catch (e) {
+      console.warn('Não foi possível reabrir o arquivo vinculado:', e);
+    }
   }
+
+  if (!loadedFromFile) {
+    const saved = await idbGet(IDB_KEY);
+    if (saved) {
+      db = new sqlJsModule.Database(new Uint8Array(saved));
+    } else {
+      db = new sqlJsModule.Database();
+    }
+  }
+
   db.run(SCHEMA_SQL);
   await persist();
   return db;
@@ -119,11 +145,55 @@ async function initDb() {
 let persistTimer = null;
 async function persist() {
   const data = db.export();
+  // O IndexedDB é sempre gravado como rede de segurança automática.
   await idbSet(IDB_KEY, data);
+  // Se houver um arquivo vinculado, ele é a cópia autoritativa.
+  if (fileMode && fileHandle) {
+    try {
+      await writeFileBytes(fileHandle, data);
+    } catch (e) {
+      console.warn('Falha ao gravar no arquivo vinculado (dados seguros no IndexedDB):', e);
+    }
+  }
 }
 function persistSoon() {
   clearTimeout(persistTimer);
   persistTimer = setTimeout(persist, 150);
+}
+
+// ---------- Vincular/desvincular arquivo real ----------
+
+async function linkNewFile(suggestedName = 'crm_kluthe.db') {
+  const handle = await pickNewFile(suggestedName);
+  fileHandle = handle;
+  fileMode = true;
+  await saveHandleRef(handle);
+  await persist();
+  return handle;
+}
+
+async function linkExistingFile() {
+  const handle = await pickExistingFile();
+  const bytes = await readFileBytes(handle);
+  if (bytes.length > 0) {
+    db = new sqlJsModule.Database(bytes);
+    db.run(SCHEMA_SQL);
+  }
+  fileHandle = handle;
+  fileMode = true;
+  await saveHandleRef(handle);
+  await persist();
+  return handle;
+}
+
+async function unlinkFile() {
+  fileHandle = null;
+  fileMode = false;
+  await clearHandleRef();
+}
+
+function currentFileStatus() {
+  return { fileMode, fileName: fileHandle ? fileHandle.name : null, supported: fileSystemAccessSupported() };
 }
 
 function all(sql, params = []) {

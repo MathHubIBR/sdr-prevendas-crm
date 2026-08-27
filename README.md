@@ -74,9 +74,10 @@ Não precisa instalar nada. Dê duplo clique em [`index.html`](index.html) — a
 │   └── style.css               estilos
 ├── js/
 │   ├── main.js                  roteamento entre telas (SPA simples, sem framework)
-│   ├── db.js                     schema SQL, persistência (IndexedDB) e acesso a dados (Repo.*)
+│   ├── db.js                     schema SQL, persistência (IndexedDB + arquivo) e acesso a dados (Repo.*)
 │   ├── util.js                    formatação de datas, canais, dinheiro, helpers de DOM
 │   ├── modal.js                    modal e toast genéricos, reutilizados por todas as telas
+│   ├── filestore.js                 persistência opcional num arquivo .db real via File System Access API
 │   ├── lib/
 │   │   ├── sql-wasm.js              build do sql.js (SQLite compilado para WebAssembly)
 │   │   └── sql-wasm-data.js          binário .wasm acima, embutido como base64 (ver nota técnica)
@@ -106,11 +107,19 @@ contas (1) ──< oportunidades (N)
 
 A tela de Follow-up é uma *view* derivada: para cada par (conta, contato), pega a interação mais recente e verifica se a próxima ação definida nela já venceu.
 
+## Sobre o armazenamento no navegador (importante)
+
+O IndexedDB usado por padrão **não é isolado por pasta/arquivo** em navegadores Chromium: todas as páginas abertas via `file://` num mesmo perfil de navegador compartilham o mesmo banco. Isso significa que abrir uma segunda cópia deste app (outra pasta, um clone, um fork local) pode ler e **sobrescrever** os dados de outra cópia sem aviso — não é um bug deste projeto, é como o Chrome/Edge implementam armazenamento local para `file://`.
+
+Para eliminar esse risco, o app permite **vincular a um arquivo `.db` real no disco** (botão "🔗 Vincular arquivo", via [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API)). Uma vez vinculado, esse arquivo passa a ser a cópia autoritativa dos dados — o IndexedDB continua sendo gravado em paralelo como rede de segurança automática, mas deixa de ser a única fonte.
+
+**Recomendação:** ao usar este app pela primeira vez, clique em "Vincular arquivo" e crie um `.db` num local seu (fora do navegador). Evite manter mais de uma cópia do app aberta/instalada sem vincular a arquivos diferentes.
+
 ## Limitações conhecidas (por desenho)
 
-- **Uso pessoal, um dispositivo por vez.** Os dados ficam no IndexedDB do navegador, vinculados ao caminho exato do arquivo `index.html` — não sincronizam entre dispositivos nem entre múltiplos usuários simultâneos. Ver seção de backup para mover dados entre máquinas.
-- **Não mova/renomeie a pasta do projeto** depois de começar a usar — isso muda a origem do armazenamento local e o navegador não encontra mais os dados antigos (o backup `.db` existe justamente para esse cenário).
+- **Uso pessoal, um dispositivo por vez.** Sem um arquivo vinculado (ver acima), os dados não sincronizam entre dispositivos nem entre múltiplos usuários simultâneos.
 - Importar um backup **substitui** todos os dados atuais — não faz merge com o que já existe.
+- File System Access API é suportada em navegadores Chromium (Edge, Chrome); em navegadores sem suporte, o app cai automaticamente para o modo IndexedDB-apenas.
 
 ## Roadmap possível
 
